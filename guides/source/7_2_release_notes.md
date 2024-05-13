@@ -5,6 +5,11 @@ Ruby on Rails 7.2 Release Notes
 
 Highlights in Rails 7.2:
 
+These release notes cover only the major changes. To learn about various bug
+fixes and changes, please refer to the changelogs or check out the [list of
+commits](https://github.com/rails/rails/commits/7-2-stable) in the main Rails
+repository on GitHub.
+
 --------------------------------------------------------------------------------
 
 Upgrading to Rails 7.2
@@ -20,6 +25,77 @@ guide.
 
 Major Features
 --------------
+
+### Devcontainers configuration for applications
+
+### Add browser version guard by default
+
+### Make Ruby 3.1 the new minimum version
+
+### Default PWA files
+
+### Add (a very basic!!) Rubocop by default
+
+### Add Brakeman by default to new apps
+
+### Add GitHub CI workflow by default to new applications
+
+### Set a new default for the Puma thread count
+
+### Prevent jobs from being scheduled within transactions
+Allow to register transaction callbacks outside of a record
+https://github.com/rails/rails/pull/51474
+
+ActiveRecord::Base.transaction now yields an ActiveRecord::Transaction object, which allows to register callbacks on it.
+Article.transaction do |transaction|
+  article.update(published: true)
+  transaction.after_commit do
+    PublishNotificationMailer.with(article: article).deliver_later
+  end
+end
+
+Added ActiveRecord::Base.current_transaction which also allows to register callbacks on it.
+Article.current_transaction.after_commit do
+  PublishNotificationMailer.with(article: article).deliver_later
+end
+
+Add ActiveRecord.after_all_transactions_commit callback.
+Useful for code that may run either inside or outside a transaction and need to perform works after the state changes have been properly peristed.
+def publish_article(article)
+  article.update(published: true)
+  ActiveRecord.after_all_transactions_commit do
+    PublishNotificationMailer.with(article: article).deliver_later
+  end
+end
+
+Automatically delay Active Job enqueues to after commit
+https://github.com/rails/rails/pull/51426
+
+A common mistake with Active Job is to enqueue jobs from inside a transaction, causing them to potentially be picked and ran by another process, before the transaction is committed, which result in various errors.
+Topic.transaction do
+  topic = Topic.create
+  NewTopicNotificationJob.perform_later(topic)
+end
+Now Active Job will automatically defer the enqueuing to after the transaction is committed, and drop the job if the transaction is rolled back.
+
+Various queue implementations can chose to disable this behavior, and users can disable it, or force it on a per job basis:
+class NewTopicNotificationJob < ApplicationJob
+  self.enqueue_after_transaction_commit = false
+end
+
+### Enable YJIT by default if running Ruby 3.3+
+https://github.com/rails/rails/pull/49947
+
+### New design for the Rails guides
+https://rubyonrails.org/2024/3/20/rails-guides-get-a-facelift
+
+### Setup jemalloc in default Dockerfile to optimize memory allocation
+https://github.com/rails/rails/pull/50943
+
+### Suggest puma-dev configuration in bin/setup
+https://github.com/rails/rails/pull/51088
+https://github.com/rails/rails/pull/51087
+
 
 Railties
 --------
