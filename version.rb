@@ -8,9 +8,8 @@ module Rails
 
   module VERSION
     MAJOR = 7
-    MINOR = 2
+    MINOR = 1
     TINY  = 0
-    PRE   = "alpha"
 
     STRING = [MAJOR, MINOR, TINY, PRE].compact.join(".")
   end
